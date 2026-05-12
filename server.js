@@ -5,31 +5,37 @@ const bcrypt = require("bcrypt");
 const path = require("path");
 
 const app = express();
-const PORT = 3000;
 
-const db = new sqlite3.Database("security.db");
+const db = new sqlite3.Database("./database.db");
 
-// ✅ MUST be first
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// ---------------- MIDDLEWARE ----------------
+app.use(express.json({
+  limit: "50mb"
+}));
 
-app.use(
-  session({
-    secret: "ai_security_key",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false
-    }
-  })
-);
+app.use(express.urlencoded({
+  extended: true,
+  limit: "50mb"
+}));
 
+app.use(session({
+  secret: "secret-key",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false,
+    httpOnly: true,
+    sameSite: "lax"
+  }
+}));
+
+// ---------------- STATIC ----------------
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/models", express.static(path.join(__dirname, "models")));
 
-// ---------------- DB ----------------
+// ---------------- DATABASE ----------------
 db.serialize(() => {
+
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,96 +48,302 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER,
-      time TEXT,
       image TEXT,
-      age INTEGER,
+      age TEXT,
       gender TEXT,
-      features TEXT
+      time TEXT
     )
   `);
+
 });
 
 // ---------------- AUTH MIDDLEWARE ----------------
 function auth(req, res, next) {
-  if (!req.session.user) return res.status(401).json({ error: "Unauthorized" });
+
+  if (!req.session.userId) {
+    return res.status(401).json({
+      error: "Unauthorized"
+    });
+  }
+
   next();
 }
 
-// ---------------- AUTH ROUTES ----------------
-app.post("/api/register", async (req, res) => {
-  const { username, password } = req.body;
+// ======================================================
+// PAGES
+// ======================================================
 
-  const hash = await bcrypt.hash(password, 10);
+// LOGIN PAGE
+app.get("/", (req, res) => {
 
-  db.run(
-    "INSERT INTO users (username, password) VALUES (?,?)",
-    [username, hash],
-    err => {
-      if (err) return res.status(400).json({ error: "User exists" });
-      res.json({ ok: true });
-    }
+  res.sendFile(
+    path.join(__dirname, "public", "index.html")
   );
+
 });
 
+// DASHBOARD PAGE
+app.get("/dashboard", (req, res) => {
+
+  if (!req.session.userId) {
+    return res.redirect("/");
+  }
+
+  res.sendFile(
+    path.join(__dirname, "public", "dashboard.html")
+  );
+
+});
+
+// ======================================================
+// AUTH API
+// ======================================================
+
+// REGISTER
+app.post("/api/register", async (req, res) => {
+
+  try {
+
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({
+        error: "Missing fields"
+      });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+
+    db.run(
+      `
+      INSERT INTO users (username, password)
+      VALUES (?, ?)
+      `,
+      [username, hash],
+      function(err) {
+
+        if (err) {
+          return res.status(400).json({
+            error: "Username already exists"
+          });
+        }
+
+        res.json({
+          ok: true
+        });
+      }
+    );
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: "Server error"
+    });
+  }
+
+});
+
+// LOGIN
 app.post("/api/login", (req, res) => {
+
   const { username, password } = req.body;
 
   db.get(
-    "SELECT * FROM users WHERE username = ?",
+    `
+    SELECT * FROM users
+    WHERE username = ?
+    `,
     [username],
     async (err, user) => {
-      if (!user) return res.status(401).json({ error: "Invalid login" });
 
-      const ok = await bcrypt.compare(password, user.password);
-      if (!ok) return res.status(401).json({ error: "Invalid login" });
+      if (err || !user) {
+        return res.status(401).json({
+          error: "Invalid login"
+        });
+      }
 
-      req.session.user = user;
-      res.json({ ok: true });
+      const valid =
+        await bcrypt.compare(
+          password,
+          user.password
+        );
+
+      if (!valid) {
+        return res.status(401).json({
+          error: "Invalid login"
+        });
+      }
+
+      req.session.userId = user.id;
+
+      req.session.save(() => {
+
+        res.json({
+          ok: true
+        });
+
+      });
     }
   );
 });
 
+// LOGOUT
 app.post("/api/logout", (req, res) => {
-  req.session.destroy(() => res.json({ ok: true }));
+
+  req.session.destroy(() => {
+
+    res.json({
+      ok: true
+    });
+
+  });
 });
 
+// CURRENT USER
 app.get("/api/me", (req, res) => {
-  res.json({ user: req.session.user || null });
+
+  if (!req.session.userId) {
+    return res.status(401).json({
+      error: "Unauthorized"
+    });
+  }
+
+  db.get(
+    `
+    SELECT id, username
+    FROM users
+    WHERE id = ?
+    `,
+    [req.session.userId],
+    (err, user) => {
+
+      if (err || !user) {
+        return res.status(401).json({
+          error: "Unauthorized"
+        });
+      }
+
+      res.json({
+        user
+      });
+    }
+  );
 });
 
-// ---------------- LOGS ----------------
+// ======================================================
+// LOGS API
+// ======================================================
+
+// GET LOGS
 app.get("/api/logs", auth, (req, res) => {
+
   db.all(
-    "SELECT * FROM logs WHERE user_id = ? ORDER BY id DESC",
-    [req.session.user.id],
+    `
+    SELECT *
+    FROM logs
+    WHERE user_id = ?
+    ORDER BY id DESC
+    `,
+    [req.session.userId],
     (err, rows) => {
-      if (err) return res.status(500).json([]);
+
+      if (err) {
+
+        console.error(err);
+
+        return res.status(500).json({
+          error: "Database error"
+        });
+      }
+
       res.json(rows);
     }
   );
 });
 
+// ADD LOG
 app.post("/api/logs", auth, (req, res) => {
-  const b = req.body;
+
+  const {
+    image,
+    age,
+    gender,
+    time
+  } = req.body;
 
   db.run(
-    `INSERT INTO logs (user_id, time, image, age, gender, features)
-     VALUES (?,?,?,?,?,?)`,
+    `
+    INSERT INTO logs (
+      user_id,
+      image,
+      age,
+      gender,
+      time
+    )
+    VALUES (?, ?, ?, ?, ?)
+    `,
     [
-      req.session.user.id,
-      b.time,
-      b.image,
-      b.age,
-      b.gender,
-      JSON.stringify(b.features || [])
+      req.session.userId,
+      image,
+      age,
+      gender,
+      time
     ],
-    () => res.json({ ok: true })
+    function(err) {
+
+      if (err) {
+
+        console.error(err);
+
+        return res.status(500).json({
+          error: "Insert failed"
+        });
+      }
+
+      res.json({
+        ok: true
+      });
+    }
   );
 });
 
+// CLEAR LOGS
 app.delete("/api/clear", auth, (req, res) => {
-  db.run("DELETE FROM logs WHERE user_id = ?", [req.session.user.id]);
-  res.json({ ok: true });
+
+  db.run(
+    `
+    DELETE FROM logs
+    WHERE user_id = ?
+    `,
+    [req.session.userId],
+    err => {
+
+      if (err) {
+
+        console.error(err);
+
+        return res.status(500).json({
+          error: "Delete failed"
+        });
+      }
+
+      res.json({
+        ok: true
+      });
+    }
+  );
 });
 
-app.listen(PORT, () => console.log("Running on http://localhost:" + PORT));
+// ======================================================
+// START SERVER
+// ======================================================
+
+app.listen(3000, () => {
+
+  console.log(
+    "Server running on http://localhost:3000"
+  );
+
+});

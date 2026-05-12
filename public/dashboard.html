@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard</title>
+
+  <link rel="stylesheet" href="/style.css">
+
+  <script defer src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+  <script defer src="/script.js"></script>
+</head>
+<body>
+
+  <header>
+    <h1>Dashboard</h1>
+
+    <div class="top-buttons">
+      <button id="exportBtn">Export Data</button>
+      <button id="clearBtn">Clear Data</button>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <main class="dashboard-layout">
+
+    <section class="camera-panel">
+
+      <div class="camera-preview" id="openFullscreen">
+
+        <video
+          id="video"
+          autoplay
+          muted
+          playsinline
+        ></video>
+
+        <canvas id="canvas"></canvas>
+
+      </div>
+
+      <p class="camera-note">
+        Click camera preview to enlarge
+      </p>
+
+    </section>
+
+    <aside class="sidebar">
+
+      <h2>Visitor Database</h2>
+
+      <div id="log"></div>
+
+    </aside>
+
+  </main>
+
+  <!-- FULLSCREEN MODAL -->
+
+  <div id="fullscreenModal" class="fullscreen-modal">
+
+    <div class="fullscreen-content">
+
+      <button id="closeFullscreen">
+        Close
+      </button>
+
+      <video
+        id="fullscreenVideo"
+        autoplay
+        muted
+        playsinline
+      ></video>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

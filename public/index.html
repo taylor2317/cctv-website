@@ -1,78 +1,166 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Security Camera - Login</title>
 
-<title>AI Security Camera</title>
-
-<link rel="stylesheet" href="style.css"/>
-
-<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-<script defer src="script.js"></script>
+  <link rel="stylesheet" href="/style.css">
 </head>
-
 <body>
 
-<!-- LOGIN -->
-<div id="loginScreen" class="login-screen">
+  <div class="login-page">
 
-  <div class="login-box">
-    <h1>AI Security Camera</h1>
+    <div class="login-box">
 
-    <input id="username" placeholder="Username" />
-    <input id="password" type="password" placeholder="Password" />
+      <h1>AI Security Camera</h1>
 
-    <button id="loginBtn">Login</button>
-    <button id="registerBtn">Register</button>
-  </div>
+      <input
+        id="username"
+        type="text"
+        placeholder="Username"
+      >
 
-</div>
+      <input
+        id="password"
+        type="password"
+        placeholder="Password"
+      >
 
-<!-- APP -->
-<div id="app" style="display:none;">
+      <div class="login-buttons">
+        <button id="loginBtn">
+          Login
+        </button>
 
-  <!-- TOP BAR -->
-  <header>
-
-    <h2>Dashboard</h2>
-
-    <div class="buttons">
-      <button id="clearBtn">Clear Data</button>
-      <button id="exportBtn">Export Data</button>
-      <button id="logoutBtn">Logout</button>
-    </div>
-
-  </header>
-
-  <!-- MAIN -->
-  <main>
-
-    <!-- CAMERA -->
-    <section class="camera-section">
-
-      <div class="video-wrap">
-
-        <!-- IMPORTANT -->
-        <video
-          id="video"
-          autoplay
-          muted
-          playsinline
-        ></video>
-
-        <canvas id="canvas"></canvas>
-
+        <button id="registerBtn">
+          Register
+        </button>
       </div>
 
-    </section>
+    </div>
 
-    <!-- LOGS -->
-    <aside id="log"></aside>
+  </div>
 
-  </main>
+  <script>
 
-</div>
+    let loading = false;
+
+    // ---------------- API ----------------
+    async function api(path, options = {}) {
+
+      const res = await fetch("/api" + path, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "include"
+      });
+
+      let data = {};
+
+      try {
+        data = await res.json();
+      } catch {}
+
+      return {
+        ok: res.ok,
+        status: res.status,
+        data
+      };
+    }
+
+    // ---------------- CHECK AUTH ----------------
+    async function checkAuth() {
+
+      const res = await api("/me");
+
+      if (res.ok && res.data.user) {
+
+        // SINGLE REDIRECT ONLY
+        window.location.replace("/dashboard");
+      }
+    }
+
+    // ---------------- LOGIN ----------------
+    document.getElementById("loginBtn").onclick =
+    async () => {
+
+      if (loading) return;
+
+      loading = true;
+
+      const username =
+        document.getElementById("username").value;
+
+      const password =
+        document.getElementById("password").value;
+
+      const res = await api("/login", {
+        method: "POST",
+        body: JSON.stringify({
+          username,
+          password
+        })
+      });
+
+      loading = false;
+
+      if (res.ok) {
+
+        // WAIT FOR SESSION COOKIE
+        setTimeout(() => {
+
+          window.location.href = "/dashboard";
+
+        }, 300);
+
+      } else {
+
+        alert("Invalid username or password");
+      }
+    };
+
+    // ---------------- REGISTER ----------------
+    document.getElementById("registerBtn").onclick =
+    async () => {
+
+      if (loading) return;
+
+      loading = true;
+
+      const username =
+        document.getElementById("username").value;
+
+      const password =
+        document.getElementById("password").value;
+
+      const res = await api("/register", {
+        method: "POST",
+        body: JSON.stringify({
+          username,
+          password
+        })
+      });
+
+      loading = false;
+
+      if (res.ok) {
+
+        alert("Account created");
+
+      } else {
+
+        alert(
+          res.data.error ||
+          "Registration failed"
+        );
+      }
+    };
+
+    // ---------------- START ----------------
+    checkAuth();
+
+  </script>
 
 </body>
 </html>

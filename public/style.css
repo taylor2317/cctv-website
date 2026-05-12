@@ -1,85 +1,274 @@
-body {
-  margin: 0;
-  font-family: Arial;
-  background: #111;
-  color: white;
-  overflow: hidden;
+* {
+  box-sizing: border-box;
 }
 
-.login-screen {
-  height: 100vh;
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f0f0f;
+  color: white;
+}
+
+/* ================= HEADER ================= */
+
+header {
+  height: 70px;
+  background: #151515;
+
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: space-between;
+
+  padding: 0 20px;
+
+  border-bottom: 1px solid #222;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.top-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  background: #00ff99;
+  border: none;
+  color: black;
+  font-weight: bold;
+
+  padding: 10px 14px;
+
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* ================= LOGIN ================= */
+
+.login-page {
+  width: 100%;
+  height: 100vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .login-box {
-  width: 300px;
-  background: #1a1a1a;
-  padding: 20px;
-  border-radius: 12px;
+  width: 400px;
+
+  background: #181818;
+
+  padding: 40px;
+
+  border-radius: 16px;
+
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 15px;
 }
 
-input,
-button {
-  padding: 10px;
+.login-box h1 {
+  margin-top: 0;
+  text-align: center;
+}
+
+.login-box input {
+  padding: 14px;
+  border-radius: 8px;
   border: none;
-  border-radius: 6px;
+
+  background: #252525;
+  color: white;
+  font-size: 16px;
 }
 
-button {
-  cursor: pointer;
-  background: #00ff99;
-  font-weight: bold;
-}
-
-header {
-  height: 60px;
-  background: #1a1a1a;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px;
-}
-
-.buttons {
+.login-buttons {
   display: flex;
   gap: 10px;
 }
 
-main {
+/* ================= DASHBOARD ================= */
+
+.dashboard-layout {
   display: flex;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 70px);
 }
 
-.camera-section {
-  flex: 2;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* ================= DATABASE ================= */
+
+.sidebar {
+  flex: 1;
+
+  background: #111;
+
+  padding: 20px;
+
+  overflow-y: auto;
 }
 
-.video-wrap {
-  position: relative;
-}
-
-video {
-  width: 700px;
-  border-radius: 12px;
-}
-
-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
+.sidebar h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
 }
 
 #log {
-  flex: 1;
-  background: #1a1a1a;
-  overflow-y: auto;
-  padding: 10px;
+  display: grid;
+
+  grid-template-columns:
+    repeat(auto-fill, minmax(250px, 1fr));
+
+  gap: 16px;
+}
+
+.visitor-card {
+  background: #1b1b1b;
+
+  border-radius: 14px;
+
+  overflow: hidden;
+
+  border: 1px solid #2a2a2a;
+}
+
+.visitor-image {
+  width: 100%;
+  height: 220px;
+
+  object-fit: cover;
+
+  display: block;
+}
+
+.visitor-info {
+  padding: 14px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ================= CAMERA ================= */
+
+.camera-panel {
+  width: 300px;
+
+  background: #161616;
+
+  border-left: 1px solid #222;
+
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 15px;
+}
+
+.camera-preview {
+  position: relative;
+
+  width: 100%;
+  aspect-ratio: 16/9;
+
+  border-radius: 14px;
+
+  overflow: hidden;
+
+  cursor: pointer;
+
+  border: 2px solid #2a2a2a;
+
+  transition: 0.2s;
+}
+
+.camera-preview:hover {
+  transform: scale(1.02);
+}
+
+.camera-preview video,
+.camera-preview canvas {
+  position: absolute;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+.camera-note {
+  font-size: 14px;
+  color: #888;
+  text-align: center;
+}
+
+/* ================= FULLSCREEN ================= */
+
+.fullscreen-modal {
+  position: fixed;
+
+  inset: 0;
+
+  background: rgba(0,0,0,0.95);
+
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+
+  z-index: 9999;
+}
+
+.fullscreen-content {
+  position: relative;
+
+  width: 90%;
+  height: 90%;
+}
+
+.fullscreen-content video {
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+
+  border-radius: 12px;
+}
+
+#closeFullscreen {
+  position: absolute;
+
+  top: -50px;
+  right: 0;
+}
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 900px) {
+
+  .dashboard-layout {
+    flex-direction: column-reverse;
+  }
+
+  .camera-panel {
+    width: 100%;
+
+    border-left: none;
+    border-top: 1px solid #222;
+  }
+
+  #log {
+    grid-template-columns: 1fr;
+  }
 }

@@ -24,69 +24,24 @@ async function api(path, options = {}) {
     credentials: "include"
   });
 
+  // SESSION EXPIRED
+  if (res.status === 401) {
+    window.location.href = "/";
+    return;
+  }
+
   return res.json();
 }
 
-// ---------------- AUTH ----------------
-async function check() {
+// ---------------- CHECK AUTH ----------------
+async function checkAuth() {
   const res = await api("/me");
 
-  if (res.user) {
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("app").style.display = "block";
-
-    init();
+  if (!res || !res.user) {
+    window.location.href = "/";
+    return;
   }
 }
-
-// ---------------- LOGIN ----------------
-document.getElementById("loginBtn").onclick = async () => {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
-
-  const res = await api("/login", {
-    method: "POST",
-    body: JSON.stringify({
-      username,
-      password
-    })
-  });
-
-  if (res.ok) {
-    check();
-  } else {
-    alert("Invalid login");
-  }
-};
-
-// ---------------- REGISTER ----------------
-document.getElementById("registerBtn").onclick = async () => {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
-
-  const res = await api("/register", {
-    method: "POST",
-    body: JSON.stringify({
-      username,
-      password
-    })
-  });
-
-  if (res.ok) {
-    alert("Registered successfully");
-  } else {
-    alert(res.error || "Registration failed");
-  }
-};
-
-// ---------------- LOGOUT ----------------
-document.getElementById("logoutBtn").onclick = async () => {
-  await api("/logout", {
-    method: "POST"
-  });
-
-  location.reload();
-};
 
 // ---------------- CAMERA ----------------
 async function startCamera() {
@@ -100,27 +55,41 @@ async function startCamera() {
 
   video.srcObject = stream;
 
+  // FULLSCREEN VIDEO
+  const fullscreenVideo =
+    document.getElementById("fullscreenVideo");
+
+  if (fullscreenVideo) {
+    fullscreenVideo.srcObject = stream;
+  }
+
   return new Promise(resolve => {
     video.onloadedmetadata = () => {
       video.play();
+
+      if (fullscreenVideo) {
+        fullscreenVideo.play();
+      }
+
       resolve();
     };
   });
 }
 
-// ---------------- MODELS ----------------
+// ---------------- LOAD MODELS ----------------
 async function loadModels() {
   const MODEL_URL = "/models";
 
   console.log("Loading models...");
 
   await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+
   await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
 
   console.log("Models loaded");
 }
 
-// ---------------- CAPTURE ----------------
+// ---------------- CAPTURE FACE ----------------
 function captureFace(box) {
   const temp = document.createElement("canvas");
 
@@ -163,25 +132,29 @@ async function loadLogs() {
       div.className = "log-item";
 
       div.innerHTML = `
-        <div style="
-          background:#222;
-          padding:10px;
-          border-radius:10px;
-          margin-bottom:10px;
-        ">
+        <div class="visitor-card">
+
           <img
             src="${l.image}"
-            style="
-              width:100%;
-              border-radius:10px;
-            "
+            class="visitor-image"
           >
 
-          <div style="margin-top:10px">
-            <div><strong>${l.gender || "Unknown"}</strong></div>
-            <div>Age: ${l.age || "Unknown"}</div>
-            <div>${l.time}</div>
+          <div class="visitor-info">
+            <div>
+              <strong>
+                ${l.gender || "Unknown"}
+              </strong>
+            </div>
+
+            <div>
+              Age: ${l.age || "Unknown"}
+            </div>
+
+            <div>
+              ${l.time}
+            </div>
           </div>
+
         </div>
       `;
 
@@ -231,16 +204,23 @@ async function detect() {
   detecting = true;
 
   try {
-    if (!video.videoWidth || !video.videoHeight) {
+    if (!video.videoWidth) {
       detecting = false;
+
       requestAnimationFrame(detect);
+
       return;
     }
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
 
     const detections = await faceapi
       .detectAllFaces(
@@ -252,23 +232,26 @@ async function detect() {
       )
       .withAgeAndGender();
 
-    console.log("Faces detected:", detections.length);
-
     for (const detection of detections) {
       const box = detection.detection.box;
 
       const age = Math.round(detection.age);
+
       const gender = detection.gender;
 
-      // SAVE ONLY EVERY 10 SECONDS
-      if (Date.now() - lastFaceTime > FACE_COOLDOWN) {
+      if (
+        Date.now() - lastFaceTime >
+        FACE_COOLDOWN
+      ) {
         lastFaceTime = Date.now();
-
-        console.log("Saving face...");
 
         const image = captureFace(box);
 
-        await saveFace(image, age, gender);
+        await saveFace(
+          image,
+          age,
+          gender
+        );
       }
     }
 
@@ -284,16 +267,20 @@ async function detect() {
 }
 
 // ---------------- CLEAR ----------------
-document.getElementById("clearBtn").onclick = async () => {
+document.getElementById("clearBtn").onclick =
+async () => {
+
   await api("/clear", {
     method: "DELETE"
   });
 
-  loadLogs();
+  await loadLogs();
 };
 
 // ---------------- EXPORT ----------------
-document.getElementById("exportBtn").onclick = async () => {
+document.getElementById("exportBtn").onclick =
+async () => {
+
   const response = await api("/logs");
 
   const logs = Array.isArray(response)
@@ -312,6 +299,7 @@ document.getElementById("exportBtn").onclick = async () => {
   const a = document.createElement("a");
 
   a.href = url;
+
   a.download = "logs.json";
 
   a.click();
@@ -319,8 +307,37 @@ document.getElementById("exportBtn").onclick = async () => {
   URL.revokeObjectURL(url);
 };
 
+// ---------------- LOGOUT ----------------
+document.getElementById("logoutBtn").onclick =
+async () => {
+
+  await api("/logout", {
+    method: "POST"
+  });
+
+  window.location.href = "/";
+};
+
+// ---------------- FULLSCREEN ----------------
+const modal =
+  document.getElementById("fullscreenModal");
+
+document.getElementById("openFullscreen")
+.onclick = () => {
+
+  modal.style.display = "flex";
+};
+
+document.getElementById("closeFullscreen")
+.onclick = () => {
+
+  modal.style.display = "none";
+};
+
 // ---------------- INIT ----------------
 async function init() {
+  await checkAuth();
+
   await startCamera();
 
   await loadModels();
@@ -330,5 +347,4 @@ async function init() {
   detect();
 }
 
-// ---------------- START ----------------
-check();
+init();
