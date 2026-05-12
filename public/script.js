@@ -348,3 +348,23 @@ async function init() {
 }
 
 init();
+
+// Particles
+const particlesContainer = document.querySelector('.particles');
+for (let i = 0; i < 30; i++) {
+  const particle = document.createElement('span');
+  particle.style.left = Math.random() * 100 + '%';
+  particle.style.animationDelay = Math.random() * 20 + 's';
+  particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+  particlesContainer.appendChild(particle);
+}
+
+// Parallax
+if (window.innerWidth > 768) {
+  document.addEventListener('mousemove', (e) => {
+    const x = (e.clientX / window.innerWidth - 0.5) * 10;
+    const y = (e.clientY / window.innerHeight - 0.5) * 10;
+    document.body.style.setProperty('--parallax-x', x);
+    document.body.style.setProperty('--parallax-y', y);
+  });
+}

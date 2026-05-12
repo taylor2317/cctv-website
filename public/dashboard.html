@@ -12,14 +12,16 @@
   <script defer src="/script.js"></script>
 </head>
 <body>
+  <div class="background-shapes" aria-hidden="true"></div>
+  <div class="particles"></div>
 
   <header>
-    <h1>Dashboard</h1>
+    <h1>CCTV Dashboard</h1>
 
     <div class="top-buttons">
       <button id="exportBtn">Export Data</button>
-      <button id="clearBtn">Clear Data</button>
-      <button id="logoutBtn">Logout</button>
+      <button id="clearBtn" class="secondary">Clear Data</button>
+      <button id="logoutBtn" class="secondary">Logout</button>
     </div>
   </header>
 
@@ -41,14 +43,14 @@
       </div>
 
       <p class="camera-note">
-        Click camera preview to enlarge
+        Click CCTV preview to enlarge
       </p>
 
     </section>
 
     <aside class="sidebar">
 
-      <h2>Visitor Database</h2>
+      <h2>CCTV Visitor Database</h2>
 
       <div id="log"></div>
 

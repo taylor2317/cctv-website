@@ -3,42 +3,95 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Security Camera - Login</title>
+  <title>CCTV Surveillance Systems - Advanced Security Monitoring</title>
 
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+  <div class="background-shapes" aria-hidden="true"></div>
+  <div class="particles"></div>
 
-  <div class="login-page">
-
-    <div class="login-box">
-
-      <h1>AI Security Camera</h1>
-
-      <input
-        id="username"
-        type="text"
-        placeholder="Username"
-      >
-
-      <input
-        id="password"
-        type="password"
-        placeholder="Password"
-      >
-
-      <div class="login-buttons">
-        <button id="loginBtn">
-          Login
-        </button>
-
-        <button id="registerBtn">
-          Register
-        </button>
-      </div>
-
+  <header class="main-header">
+    <div class="container">
+      <h1 class="logo">CCTV Security Camera</h1>
+      <nav>
+        <button id="loginBtn" class="secondary">Login</button>
+      </nav>
     </div>
+  </header>
 
+  <main>
+    <section class="hero">
+      <div class="container">
+        <h2>Advanced CCTV Surveillance Solutions</h2>
+        <p>Protect your property with state-of-the-art CCTV monitoring systems. Real-time video surveillance, comprehensive visitor logging, and secure access control for ultimate peace of mind.</p>
+        <button id="heroLoginBtn">Secure Your Space</button>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="container">
+        <h3>Key Features</h3>
+        <div class="features-grid">
+          <div class="feature-card">
+            <h4>24/7 Live Monitoring</h4>
+            <p>Continuous CCTV surveillance with instant alerts and real-time video streaming for immediate threat detection.</p>
+          </div>
+          <div class="feature-card">
+            <h4>Comprehensive Activity Logs</h4>
+            <p>Detailed visitor tracking with timestamps, entry/exit records, and complete surveillance history.</p>
+          </div>
+          <div class="feature-card">
+            <h4>Fortified Security Access</h4>
+            <p>Multi-layered authentication and encrypted data protection ensuring your surveillance footage stays secure.</p>
+          </div>
+          <div class="feature-card">
+            <h4>Professional Surveillance Interface</h4>
+            <p>Enterprise-grade CCTV dashboard with intuitive controls, high-definition video playback, and advanced monitoring tools.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="about">
+      <div class="container">
+        <h3>About Our CCTV Technology</h3>
+        <p>Our advanced CCTV surveillance systems deliver unparalleled security monitoring with high-resolution cameras, intelligent motion detection, and comprehensive coverage. From residential properties to commercial facilities, our cutting-edge CCTV solutions provide the vigilance you need to protect what matters most.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 AI Security Camera. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- LOGIN MODAL -->
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <div class="login-box">
+        <h1>CCTV Security Login</h1>
+
+        <input
+          id="username"
+          type="text"
+          placeholder="Username"
+        >
+
+        <input
+          id="password"
+          type="password"
+          placeholder="Password"
+        >
+
+        <div class="login-buttons">
+          <button id="modalLoginBtn">Login</button>
+          <button id="registerBtn" class="secondary">Register</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -81,8 +134,24 @@
       }
     }
 
+    // ---------------- MODAL ----------------
+    const modal = document.getElementById("loginModal");
+    const loginBtn = document.getElementById("loginBtn");
+    const heroLoginBtn = document.getElementById("heroLoginBtn");
+    const closeBtn = document.getElementsByClassName("close")[0];
+
+    loginBtn.onclick = () => modal.style.display = "flex";
+    heroLoginBtn.onclick = () => modal.style.display = "flex";
+    closeBtn.onclick = () => modal.style.display = "none";
+
+    window.onclick = (event) => {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    };
+
     // ---------------- LOGIN ----------------
-    document.getElementById("loginBtn").onclick =
+    document.getElementById("modalLoginBtn").onclick =
     async () => {
 
       if (loading) return;
@@ -160,6 +229,28 @@
     // ---------------- START ----------------
     checkAuth();
 
+  </script>
+
+  <script>
+    // Particles
+    const particlesContainer = document.querySelector('.particles');
+    for (let i = 0; i < 30; i++) {
+      const particle = document.createElement('span');
+      particle.style.left = Math.random() * 100 + '%';
+      particle.style.animationDelay = Math.random() * 20 + 's';
+      particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+      particlesContainer.appendChild(particle);
+    }
+
+    // Parallax
+    if (window.innerWidth > 768) {
+      document.addEventListener('mousemove', (e) => {
+        const x = (e.clientX / window.innerWidth - 0.5) * 10;
+        const y = (e.clientY / window.innerHeight - 0.5) * 10;
+        document.body.style.setProperty('--parallax-x', x);
+        document.body.style.setProperty('--parallax-y', y);
+      });
+    }
   </script>
 
 </body>
