@@ -8,6 +8,11 @@ const app = express();
 
 const db = new sqlite3.Database("./database.db");
 
+// Load environment variables (for development, or use .env file)
+const SESSION_SECRET = process.env.SESSION_SECRET || (() => {
+  throw new Error("SESSION_SECRET environment variable is not set");
+})();
+
 // ---------------- MIDDLEWARE ----------------
 app.use(express.json({
   limit: "50mb"
@@ -19,7 +24,7 @@ app.use(express.urlencoded({
 }));
 
 app.use(session({
-  secret: "secret-key",
+  secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
