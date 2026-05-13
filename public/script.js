@@ -14,6 +14,7 @@ const API = "/api";
 
 const FACE_COOLDOWN = 10000;
 const cameras = [];
+
 let activeCamera = null;
 
 // ---------------- API ----------------
