@@ -54,9 +54,21 @@
 
     <div class="fullscreen-content">
 
-      <button id="closeFullscreen">
-        Close
-      </button>
+      <div class="fullscreen-header">
+        <div>
+          <h2 id="fullscreenTitle">Camera</h2>
+          <div id="fullscreenStatus" class="fullscreen-status">Live</div>
+        </div>
+
+        <div class="header-buttons">
+          <button id="fullscreenSettingsBtn" class="secondary" type="button">
+            Settings
+          </button>
+          <button id="closeFullscreen" type="button">
+            Close
+          </button>
+        </div>
+      </div>
 
       <video
         id="fullscreenVideo"
@@ -64,6 +76,23 @@
         muted
         playsinline
       ></video>
+
+      <div id="settingsPanel" class="settings-panel">
+        <label class="settings-field">
+          <span>Camera Name</span>
+          <input id="cameraNameInput" type="text" placeholder="Enter camera name">
+        </label>
+
+        <div class="settings-actions">
+          <button id="renameCameraBtn" type="button">Rename</button>
+          <button id="toggleEnabledBtn" type="button">Disable Camera</button>
+        </div>
+
+        <div class="settings-flip-group">
+          <button id="toggleFlipHBtn" type="button">Flip Horizontal</button>
+          <button id="toggleFlipVBtn" type="button">Flip Vertical</button>
+        </div>
+      </div>
 
     </div>
 

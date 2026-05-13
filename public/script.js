@@ -1,9 +1,20 @@
 const cameraGrid = document.getElementById("cameraGrid");
 const fullscreenVideo = document.getElementById("fullscreenVideo");
+const fullscreenModal = document.getElementById("fullscreenModal");
+const fullscreenTitle = document.getElementById("fullscreenTitle");
+const fullscreenStatus = document.getElementById("fullscreenStatus");
+const fullscreenSettingsBtn = document.getElementById("fullscreenSettingsBtn");
+const settingsPanel = document.getElementById("settingsPanel");
+const cameraNameInput = document.getElementById("cameraNameInput");
+const renameCameraBtn = document.getElementById("renameCameraBtn");
+const toggleEnabledBtn = document.getElementById("toggleEnabledBtn");
+const toggleFlipHBtn = document.getElementById("toggleFlipHBtn");
+const toggleFlipVBtn = document.getElementById("toggleFlipVBtn");
 const API = "/api";
 
 const FACE_COOLDOWN = 10000;
 const cameras = [];
+let activeCamera = null;
 
 // ---------------- API ----------------
 async function api(path, options = {}) {
@@ -86,7 +97,69 @@ function setCameraStatus(camera, status) {
   camera.card.dataset.status = status.toLowerCase();
 }
 
-function showCameraMessage(message) {
+function applyCameraFlip(camera) {
+  const scaleX = camera.flipH ? -1 : 1;
+  const scaleY = camera.flipV ? -1 : 1;
+  const transform = `scale(${scaleX}, ${scaleY})`;
+
+  if (camera.video) camera.video.style.transform = transform;
+  if (camera.canvas) camera.canvas.style.transform = transform;
+
+  if (activeCamera === camera && fullscreenVideo) {
+    fullscreenVideo.style.transform = transform;
+  }
+}
+
+function setCameraEnabled(camera, enabled) {
+  camera.enabled = enabled;
+
+  if (camera.stream) {
+    camera.stream.getVideoTracks().forEach(track => {
+      track.enabled = enabled;
+    });
+  }
+
+  if (enabled) {
+    camera.video.play().catch(() => {});
+    setCameraStatus(camera, "Live");
+  } else {
+    camera.video.pause();
+    setCameraStatus(camera, "Disabled");
+  }
+}
+
+function renameCamera(camera, newLabel) {
+  camera.label = newLabel || camera.label;
+  camera.name.textContent = camera.label;
+
+  if (activeCamera === camera) {
+    fullscreenTitle.textContent = camera.label;
+  }
+}
+
+function updateSettingsState(camera) {
+  if (!camera) return;
+
+  toggleEnabledBtn.textContent = camera.enabled
+    ? "Disable Camera"
+    : "Enable Camera";
+
+  toggleFlipHBtn.textContent = camera.flipH
+    ? "Unflip Horizontal"
+    : "Flip Horizontal";
+
+  toggleFlipVBtn.textContent = camera.flipV
+    ? "Unflip Vertical"
+    : "Flip Vertical";
+
+  fullscreenStatus.textContent = camera.status.textContent;
+}
+
+function toggleSettingsPanel() {
+  settingsPanel.classList.toggle("open");
+}
+
+function openFullscreen(camera) {
   cameraGrid.innerHTML = "";
 
   const empty = document.createElement("div");
@@ -97,12 +170,20 @@ function showCameraMessage(message) {
 }
 
 function openFullscreen(camera) {
-  const modal = document.getElementById("fullscreenModal");
+  activeCamera = camera;
+  fullscreenTitle.textContent = camera.label;
+  cameraNameInput.value = camera.label;
+  fullscreenStatus.textContent = camera.status.textContent;
 
   fullscreenVideo.srcObject = camera.stream;
-  fullscreenVideo.play();
+  fullscreenVideo.style.transform = "";
+  applyCameraFlip(camera);
 
-  modal.style.display = "flex";
+  settingsPanel.classList.remove("open");
+  updateSettingsState(camera);
+
+  fullscreenVideo.play().catch(() => {});
+  fullscreenModal.style.display = "flex";
 }
 
 // ---------------- CAMERA STARTUP ----------------
@@ -131,7 +212,10 @@ async function startCamera(device, index) {
     label: device.label || `Camera ${index + 1}`,
     lastFaceTime: 0,
     detecting: false,
-    saving: false
+    saving: false,
+    enabled: true,
+    flipH: false,
+    flipV: false
   };
 
   createCameraCard(camera);
@@ -287,9 +371,11 @@ async function detect(camera) {
   camera.detecting = true;
 
   try {
-    if (!camera.video.videoWidth) {
+    if (!camera.video.videoWidth || !camera.enabled) {
       camera.detecting = false;
-      requestAnimationFrame(() => detect(camera));
+      setTimeout(() => {
+        requestAnimationFrame(() => detect(camera));
+      }, 250);
       return;
     }
 
@@ -405,6 +491,35 @@ document.getElementById("closeFullscreen").onclick = () => {
   fullscreenVideo.pause();
   fullscreenVideo.srcObject = null;
   modal.style.display = "none";
+};
+
+fullscreenSettingsBtn.onclick = () => {
+  toggleSettingsPanel();
+};
+
+renameCameraBtn.onclick = () => {
+  if (!activeCamera) return;
+  renameCamera(activeCamera, cameraNameInput.value.trim() || activeCamera.label);
+};
+
+toggleEnabledBtn.onclick = () => {
+  if (!activeCamera) return;
+  setCameraEnabled(activeCamera, !activeCamera.enabled);
+  updateSettingsState(activeCamera);
+};
+
+toggleFlipHBtn.onclick = () => {
+  if (!activeCamera) return;
+  activeCamera.flipH = !activeCamera.flipH;
+  applyCameraFlip(activeCamera);
+  updateSettingsState(activeCamera);
+};
+
+toggleFlipVBtn.onclick = () => {
+  if (!activeCamera) return;
+  activeCamera.flipV = !activeCamera.flipV;
+  applyCameraFlip(activeCamera);
+  updateSettingsState(activeCamera);
 };
 
 // ---------------- INIT ----------------
